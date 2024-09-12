@@ -1,0 +1,62 @@
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: Logging
+metadata:
+  name: logging-default
+spec:
+  controlNamespace: logging
+  fluentd:
+    workers: 4
+    rootDir: /buffers
+    resources:
+      limits:
+        memory: 1000Mi
+      requests:
+        cpu: 500m
+        memory: 1000Mi
+    bufferStorageVolume:
+      pvc:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 20Gi
+          storageClassName: standard-rwo
+          volumeMode: Filesystem
+  fluentbit:
+    filterKubernetes:
+      Annotations: "Off"
+      Labels: "Off"
+---
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: ClusterFlow
+metadata:
+  name: logging-flow
+spec:
+  globalOutputRefs:
+  - loki-output
+  match:
+  - exclude:
+      namespaces:
+      - kube-system
+      - gmp-system
+      - gke-managed-dpv2-observability
+  - select: {}
+--- 
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: ClusterOutput
+metadata:
+  name: loki-output
+spec:
+  loki:
+    buffer:
+      chunk_limit_size: 8MB
+      flush_interval: 10s
+      flush_mode: interval
+      flush_thread_count: 4
+      retry_forever: false
+      retry_timeout: 12h
+    configure_kubernetes_labels: true
+    include_thread_label: false
+    tenant: "1"
+    url: http://loki-gateway

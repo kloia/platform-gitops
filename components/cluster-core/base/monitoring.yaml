@@ -1,0 +1,152 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  destination:
+    namespace: monitoring
+    server: "https://kubernetes.default.svc"
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: "61.7.0"
+    helm:
+      valuesObject:
+        grafana:
+          defaultDashboardsTimezone: Europe/Istanbul
+          sidecar:
+            dashboards:
+              enabled: true
+          persistence:
+            type: sts
+            accessModes:
+              - ReadWriteOnce
+            enabled: true
+            size: 10Gi
+          ingress:
+            ingressClassName: nginx
+            enabled: true
+            pathType: ImplementationSpecific
+            hosts:
+               - PATCH_ME
+            annotations: 
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+              nginx.ingress.kubernetes.io/whitelist-source-range: PATCH_ME
+            tls:
+              - secretName: grafana-general-tls
+                hosts:
+                - PATCH_ME
+        prometheus:
+          enabled: true
+          ingress:
+            ingressClassName: nginx
+            enabled: true
+            pathType: ImplementationSpecific
+            hosts:
+              - PATCH_ME
+            annotations: 
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+              nginx.ingress.kubernetes.io/whitelist-source-range: PATCH_ME
+            tls:
+              - secretName: prometheus-general-tls
+                hosts:
+                - PATCH_ME
+          prometheusSpec:
+            podMonitorSelectorNilUsesHelmValues: false
+            probeSelectorNilUsesHelmValues: false
+            ruleSelectorNilUsesHelmValues: false
+            serviceMonitorSelectorNilUsesHelmValues: false
+            enableRemoteWriteReceiver: true
+            evaluationInterval: 1m
+            resources:
+              limits:
+                memory: 2000Mi
+              requests:
+                cpu: 200m
+                memory: 1000Mi
+            retention: 60d
+            retentionSize: 50GiB
+            scrapeInterval: 1m
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 60Gi
+        alertmanager:
+          alertmanagerSpec:
+            replicas: 1
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            pathType: ImplementationSpecific
+            hosts:
+               - PATCH_ME alertmanager.kloia.com
+            annotations: 
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+              nginx.ingress.kubernetes.io/whitelist-source-range: PATCH_ME
+            tls:
+              - secretName: alertmanager-general-tls
+                hosts:
+                - PATCH_ME
+          config:
+            route:
+              group_by: ['job', 'alertname', 'namespace', 'severity']
+              group_wait: 30s
+              group_interval: 5m
+              repeat_interval: 24h
+              receiver: 'slack'
+              routes:
+                - receiver: 'null'
+                  matchers:
+                    - alertname =~ "InfoInhibitor"
+                    - alertname =~ "Watchdog"
+                - receiver: 'slack'
+                  continue: true
+            receivers:
+              - name: 'slack'
+                slack_configs:
+                  - send_resolved: true
+                    icon_emoji: ":prometheus:"
+                    # title_link: https://www.example.com
+                    # Specifying the color with multiline YAML string does not work, hence this difficult-to-read single quoted one liner.
+                    color: '{{ if eq .Status "firing" -}}{{ if eq .CommonLabels.severity "warning" -}}warning{{- else if eq .CommonLabels.severity "critical" -}}danger{{- else -}}#439FE0{{- end -}}{{ else -}}good{{- end }}'
+                    username: 'PATCH_ME'
+                    channel: 'PATCH_ME'
+                    api_url: 'PATCH_ME'
+              - name: 'null'
+        nodeExporter:
+          enabled: true
+        kubeControllerManager:
+          enabled: false
+        kubeScheduler:
+          enabled: false 
+        kubeProxy:
+          enabled: false
+        coreDns:
+          enabled: false
+        defaultRules:
+          rules:
+            kubeControllerManager: false
+            kubeProxy: false
+            kubeScheduler: false
+          ## Reduce app namespace alert scope
+          appNamespacesTarget: ".*"
+          ## Additional annotations for PrometheusRule alerts
+          additionalRuleAnnotations:
+            dashboard_url: https://example.com
+          ## Prefix for runbook URLs. Use this to override the first part of the runbookURLs that is common to all rules.
+          runbookUrl: "https://runbooks.prometheus-operator.dev/runbooks"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

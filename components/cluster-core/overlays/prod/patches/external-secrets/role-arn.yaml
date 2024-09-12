@@ -1,0 +1,12 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-secrets
+  namespace: argocd
+spec:
+  source:
+    helm:
+      valuesObject:
+        serviceAccount:
+          annotations:
+            iam.gke.io/gcp-service-account: "gke-compute@kloia.iam.gserviceaccount.com"

@@ -1,0 +1,11 @@
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: github-credentials-helm-charts
+  namespace: argocd
+spec:
+  data:
+    - secretKey: githubToken
+      remoteRef:
+        key: githubToken

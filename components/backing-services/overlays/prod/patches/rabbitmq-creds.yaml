@@ -1,0 +1,13 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: rabbitmq-creds
+  namespace: rabbitmq
+spec:
+  data:
+    - secretKey: "rabbitmqPassword"
+      remoteRef:
+        key: "kloia_rabbitmq_prod_rabbitmq-password"
+    - secretKey: "rabbitmqErlangCookie"
+      remoteRef:
+        key: "kloia_rabbitmq_prod_rabbitmq-erlang-cookie"

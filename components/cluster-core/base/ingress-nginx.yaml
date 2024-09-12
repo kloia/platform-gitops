@@ -1,0 +1,56 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ingress-nginx
+  namespace: argocd
+spec:
+  destination:
+    namespace: ingress-nginx
+    server: "https://kubernetes.default.svc"
+  source:
+    repoURL: "https://kubernetes.github.io/ingress-nginx"
+    chart: "ingress-nginx"
+    # appVersion: 1.10.1
+    targetRevision: "4.11.1"
+    helm:
+      valuesObject:
+        defaultBackend:
+          enabled: true
+        controller:
+          allowSnippetAnnotations: true
+          config:
+            use-forwarded-headers: true
+            client-header-buffer-size: 32k
+          ingressClassResource:
+            name: nginx
+            enabled: true
+            default: true
+            controllerValue: "k8s.io/ingress-nginx"
+            parameters: {}  
+          kind: DaemonSet
+          healthCheckPath: "/healthz"
+          metrics:
+            port: 10254
+            enabled: true
+            serviceMonitor:
+              enabled: true
+          service:
+            external:
+              enabled: true
+            enabled: true
+            enableHttp: true
+            enableHttps: true
+            ports:
+              http: 80
+              https: 443
+            targetPorts:
+              http: http
+              https: https
+            type: LoadBalancer
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

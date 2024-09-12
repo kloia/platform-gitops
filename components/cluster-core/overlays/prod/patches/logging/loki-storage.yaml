@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki
+  namespace: argocd
+spec:
+  source:
+    helm:
+      valuesObject:
+        serviceAccount:
+          annotations:
+            iam.gke.io/gcp-service-account: "gcs-service-account@kloia.iam.gserviceaccount.com"
+        loki:
+          storage:
+            bucketNames:
+              chunks: loki-prod-chunks
+              ruler: loki-prod-ruler
+              admin: loki-prod-admin
+          compactor:
+            working_directory: /data/retention
+            compaction_interval: 10m
+            retention_enabled: true
+            retention_delete_delay: 2h
+            retention_delete_worker_count: 150
+            delete_request_store: gcs
+          limits_config:
+            retention_period: 360h
+        backend:
+          extraVolumes:
+            - name: data
+              emptyDir: {}
+          extraVolumeMounts:
+            - name: data
+              mountPath: /data
+

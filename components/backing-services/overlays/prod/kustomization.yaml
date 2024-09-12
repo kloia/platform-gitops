@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base/
+
+patches:
+  - path: patches/rabbitmq.yaml
+  - path: patches/rabbitmq-creds.yaml
+  - path: patches/redis-creds.yaml
+  - path: patches/redis.yaml

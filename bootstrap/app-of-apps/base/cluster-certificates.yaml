@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-certificates
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-998"
+spec:
+  destination:
+    namespace: argocd
+    server: "https://kubernetes.default.svc"
+  source:
+    repoURL: "https://github.com/kloia/platform-gitops.git"
+    targetRevision: "HEAD"
+    path: "components/cluster-certificates/PATCH_ME"
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

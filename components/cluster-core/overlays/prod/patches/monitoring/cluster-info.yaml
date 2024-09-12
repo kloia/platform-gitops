@@ -1,0 +1,62 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    helm:
+      valuesObject:
+        grafana:
+          defaultDashboardsTimezone: Europe/Istanbul
+          ingress:
+            hosts:
+               - monitoring.kloia.com
+            annotations: 
+            tls:
+              - secretName: grafana-general-tls
+                hosts:
+                - monitoring.kloia.com              
+        prometheus:
+          ingress:
+            hosts:
+              - prometheus.kloia.com
+            tls:
+              - secretName: prometheus-general-tls
+                hosts:
+                - prometheus.kloia.com
+        alertmanager:
+          ingress:
+            hosts:
+               - alertmanager.kloia.com
+            tls:
+              - secretName: alertmanager-general-tls
+                hosts:
+                - alertmanager.kloia.com
+          config:
+            receivers:
+              - name: 'slack'
+                slack_configs:
+                  - send_resolved: true
+                    username: 'prod-k8s'
+                    icon_emoji: ":prometheus:"
+                    channel: '#kubernates-notification'
+                    api_url: ''
+                    color: '{{ if eq .Status "firing" -}}{{ if eq .CommonLabels.severity "warning" -}}warning{{- else if eq .CommonLabels.severity "critical" -}}danger{{- else -}}#439FE0{{- end -}}{{ else -}}good{{- end }}'
+                    title: |-
+                      {{ if eq .Status "firing" }}[{{ .Status | toUpper }}:{{ .Alerts.Firing | len }}] [{{.CommonLabels.severity | toUpper}}]{{ end }}{{ if eq .Status "resolved" }}[{{ .Status | toUpper }}:{{ .Alerts.Resolved | len }}]{{ end }} - {{ .CommonLabels.alertname }}
+                    text: |-
+                      {{ if gt (len .Alerts.Resolved) 0 }}
+                      {{ range .Alerts.Resolved }}
+                      *RESOLVED:* {{ .Annotations.description }}
+                      {{ .Annotations.message }}
+                      {{ end }}{{ end }}
+                      {{ if gt (len .Alerts.Firing) 0 }}
+                      {{ range .Alerts.Firing }}
+                      *FIRING:* {{ .Annotations.description }}
+                      {{ .Annotations.message }}
+                      {{ end }}{{ end }}
+              - name: 'null'
