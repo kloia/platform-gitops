@@ -6,6 +6,7 @@ resources:
   - bootstrap.yaml
   - argocd.yaml
   - cluster-core.yaml
+  - clusters.yaml
   #- cluster-repo-creds.yaml
   #- cluster-certificates.yaml
   #- backing-services.yaml

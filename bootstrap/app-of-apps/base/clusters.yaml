@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: clusters
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1000"
+  labels:
+    exclude: "true"
+spec:
+  destination:
+    namespace: argocd
+    server: "https://kubernetes.default.svc"
+  source:
+    repoURL: "https://github.com/kloia/platform-gitops.git"
+    targetRevision: "upstream-test"
+    path: "clusters/PATCH_ME"
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

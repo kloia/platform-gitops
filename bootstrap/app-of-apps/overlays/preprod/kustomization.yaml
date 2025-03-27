@@ -21,6 +21,17 @@ replacements:
           group: argoproj.io
           version: v1alpha1
           kind: Application
+          name: clusters
+        fieldPaths:
+          - "spec.source.path"
+        options:
+          delimiter: "/"
+          index: 1
+      - select:
+          group: argoproj.io
+          version: v1alpha1
+          kind: Application
+          labelSelector: "!exclude"
         fieldPaths:
           - "spec.source.path"
         options:
