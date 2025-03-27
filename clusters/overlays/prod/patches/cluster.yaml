@@ -1,0 +1,6 @@
+apiVersion: provisioning.cattle.io/v1
+kind: Cluster
+metadata:
+  name: downstream
+spec:
+  kubernetesVersion: v1.30.10+rke2r1

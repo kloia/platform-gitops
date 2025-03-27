@@ -4,9 +4,7 @@ metadata:
   name: argocd-server
   namespace: argocd
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
     ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
   labels:
     app.kubernetes.io/component: server
     app.kubernetes.io/instance: argocd
@@ -15,17 +13,13 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: gitops.kloia.com
+    - host: upstream.gitops.omer.com
       http:
         paths:
           - backend:
               service:
                 name: argocd-server
                 port:
-                  number: 443
+                  number: 80
             path: /
             pathType: Prefix
-  tls:
-  - hosts:
-    - gitops.kloia.com
-    secretName: argocd-ingress-secret

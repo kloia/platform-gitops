@@ -11,7 +11,7 @@ spec:
     server: "https://kubernetes.default.svc"
   source:
     repoURL: "https://github.com/kloia/platform-gitops.git"
-    targetRevision: "HEAD"
+    targetRevision: "upstream-test"
     path: "components/argocd/PATCH_ME"
   project: default
   syncPolicy:
