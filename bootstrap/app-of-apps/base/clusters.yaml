@@ -17,8 +17,8 @@ spec:
     path: "clusters/PATCH_ME"
   project: default
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
+    #automated:
+    #  prune: true
+    #  selfHeal: true
     syncOptions:
       - CreateNamespace=true
